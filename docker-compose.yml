@@ -1,0 +1,334 @@
+version: '3.8'
+
+services:
+  # Main application
+  moneyprinter-pro:
+    build:
+      context: .
+      target: production
+    container_name: moneyprinter-pro
+    restart: unless-stopped
+    ports:
+      - "8080:8080"  # API
+      - "8501:8501"  # WebUI
+      - "9090:9090"  # Metrics
+    environment:
+      - MONEYPRINTER_PRO_ENV=production
+      - MONEYPRINTER_PRO_HOST=0.0.0.0
+      - MONEYPRINTER_PRO_API_PORT=8080
+      - MONEYPRINTER_PRO_WEBUI_PORT=8501
+      - MONEYPRINTER_PRO_ENABLE_GPU=false
+      - MONEYPRINTER_PRO_LOG_LEVEL=INFO
+      - MONEYPRINTER_PRO_DATABASE_URL=postgresql://moneyprinter:password@postgres:5432/moneyprinter_pro
+      - MONEYPRINTER_PRO_REDIS_URL=redis://redis:6379
+    volumes:
+      - ./config.toml:/app/config.toml:ro
+      - ./storage:/app/storage
+      - ./output:/app/output
+      - ./cache:/app/cache
+      - ./temp:/app/temp
+      - ./logs:/app/logs
+      - ./models:/app/models
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - moneyprinter-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # GPU-enabled version
+  moneyprinter-pro-gpu:
+    build:
+      context: .
+      target: gpu
+    container_name: moneyprinter-pro-gpu
+    restart: unless-stopped
+    ports:
+      - "8081:8080"  # API
+      - "8502:8501"  # WebUI
+      - "9091:9090"  # Metrics
+    environment:
+      - MONEYPRINTER_PRO_ENV=production
+      - MONEYPRINTER_PRO_HOST=0.0.0.0
+      - MONEYPRINTER_PRO_API_PORT=8080
+      - MONEYPRINTER_PRO_WEBUI_PORT=8501
+      - MONEYPRINTER_PRO_ENABLE_GPU=true
+      - MONEYPRINTER_PRO_LOG_LEVEL=INFO
+      - MONEYPRINTER_PRO_DATABASE_URL=postgresql://moneyprinter:password@postgres:5432/moneyprinter_pro
+      - MONEYPRINTER_PRO_REDIS_URL=redis://redis:6379
+    volumes:
+      - ./config.toml:/app/config.toml:ro
+      - ./storage:/app/storage
+      - ./output:/app/output
+      - ./cache:/app/cache
+      - ./temp:/app/temp
+      - ./logs:/app/logs
+      - ./models:/app/models
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - moneyprinter-network
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Development version
+  moneyprinter-pro-dev:
+    build:
+      context: .
+      target: development
+    container_name: moneyprinter-pro-dev
+    restart: unless-stopped
+    ports:
+      - "8082:8080"  # API
+      - "8503:8501"  # WebUI
+      - "9092:9090"  # Metrics
+    environment:
+      - MONEYPRINTER_PRO_ENV=development
+      - MONEYPRINTER_PRO_HOST=0.0.0.0
+      - MONEYPRINTER_PRO_API_PORT=8080
+      - MONEYPRINTER_PRO_WEBUI_PORT=8501
+      - MONEYPRINTER_PRO_RELOAD=true
+      - MONEYPRINTER_PRO_LOG_LEVEL=DEBUG
+      - MONEYPRINTER_PRO_DATABASE_URL=postgresql://moneyprinter:password@postgres:5432/moneyprinter_pro_dev
+      - MONEYPRINTER_PRO_REDIS_URL=redis://redis:6379
+    volumes:
+      - ./config.toml:/app/config.toml:ro
+      - ./storage:/app/storage
+      - ./output:/app/output
+      - ./cache:/app/cache
+      - ./temp:/app/temp
+      - ./logs:/app/logs
+      - ./models:/app/models
+      - .:/app  # Mount source code for development
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - moneyprinter-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # PostgreSQL database
+  postgres:
+    image: postgres:15-alpine
+    container_name: moneyprinter-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=moneyprinter_pro
+      - POSTGRES_USER=moneyprinter
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_MULTIPLE_DATABASES=moneyprinter_pro,moneyprinter_pro_dev
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-multiple-databases.sh:/docker-entrypoint-initdb.d/init-multiple-databases.sh:ro
+    ports:
+      - "5432:5432"
+    networks:
+      - moneyprinter-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U moneyprinter -d moneyprinter_pro"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # Redis cache
+  redis:
+    image: redis:7-alpine
+    container_name: moneyprinter-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - moneyprinter-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # Nginx reverse proxy
+  nginx:
+    image: nginx:alpine
+    container_name: moneyprinter-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./nginx/logs:/var/log/nginx
+    depends_on:
+      - moneyprinter-pro
+    networks:
+      - moneyprinter-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # Prometheus monitoring
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: moneyprinter-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - moneyprinter-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # Grafana dashboard
+  grafana:
+    image: grafana/grafana:latest
+    container_name: moneyprinter-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    depends_on:
+      - prometheus
+    networks:
+      - moneyprinter-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # MinIO object storage (alternative to S3)
+  minio:
+    image: minio/minio:latest
+    container_name: moneyprinter-minio
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - moneyprinter-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # Elasticsearch for logging
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: moneyprinter-elasticsearch
+    restart: unless-stopped
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+    networks:
+      - moneyprinter-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Kibana for log visualization
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.11.0
+    container_name: moneyprinter-kibana
+    restart: unless-stopped
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+    networks:
+      - moneyprinter-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5601/api/status || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+  minio_data:
+    driver: local
+  elasticsearch_data:
+    driver: local
+
+networks:
+  moneyprinter-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
