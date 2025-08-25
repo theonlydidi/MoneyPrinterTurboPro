@@ -1,0 +1,357 @@
+# MoneyPrinterTurboPro Configuration File
+# Copy this file to config.toml and modify as needed
+
+[app]
+# Application basic settings
+name = "MoneyPrinterTurboPro"
+version = "2.0.0"
+debug = false
+log_level = "INFO"
+
+# Server settings
+host = "0.0.0.0"
+port = 8080
+webui_port = 8501
+workers = 4
+reload = false
+
+# Video source providers (can use multiple)
+video_sources = ["pexels", "pixabay", "unsplash", "local"]
+
+# Hide configuration panel in WebUI
+hide_config = false
+
+# Enable authentication
+enable_auth = true
+
+# Enable rate limiting
+enable_rate_limit = true
+
+# Enable WebSocket support
+enable_websocket = true
+
+# Enable GPU acceleration
+enable_gpu = true
+
+# Enable video caching
+enable_cache = true
+
+# Cache settings
+cache_dir = "./cache"
+cache_size_limit = "10GB"
+cache_ttl = 86400  # 24 hours in seconds
+
+# Temporary files cleanup
+temp_dir = "./temp"
+cleanup_temp_files = true
+temp_file_ttl = 3600  # 1 hour in seconds
+
+# Output settings
+output_dir = "./output"
+output_formats = ["mp4", "mov", "webm", "avi"]
+default_quality = "1080p"
+default_fps = 30
+
+# Database settings
+database_url = "sqlite:///./moneyprinter_pro.db"
+redis_url = "redis://localhost:6379"
+
+# Storage settings
+storage_type = "local"  # local, s3, azure, gcp
+storage_path = "./storage"
+
+# Security settings
+jwt_secret = "your-super-secret-jwt-key-change-this"
+jwt_algorithm = "HS256"
+jwt_expire_minutes = 1440  # 24 hours
+bcrypt_rounds = 12
+
+# Rate limiting
+max_requests_per_minute = 60
+max_videos_per_user = 100
+max_concurrent_tasks = 4
+
+# API settings
+api_prefix = "/api/v1"
+enable_cors = true
+cors_origins = ["*"]
+enable_docs = true
+
+# Monitoring and metrics
+enable_metrics = true
+metrics_port = 9090
+enable_health_check = true
+health_check_interval = 30
+
+# Video processing settings
+video_processing_timeout = 1800  # 30 minutes
+max_video_duration = 600  # 10 minutes
+max_video_size = "2GB"
+enable_parallel_processing = true
+
+# AI model settings
+default_llm_provider = "openai"
+default_voice_provider = "azure"
+default_subtitle_provider = "whisper"
+
+# Quality presets
+[quality_presets]
+"4k" = { width = 3840, height = 2160, bitrate = "50M", fps = 30 }
+"2k" = { width = 2560, height = 1440, bitrate = "25M", fps = 30 }
+"1080p" = { width = 1920, height = 1080, bitrate = "15M", fps = 30 }
+"720p" = { width = 1280, height = 720, bitrate = "8M", fps = 30 }
+"480p" = { width = 854, height = 480, bitrate = "4M", fps = 30 }
+
+# Video style presets
+[style_presets]
+"modern" = { transitions = ["fade", "slide"], filters = ["vintage"], color_scheme = "cool" }
+"business" = { transitions = ["fade"], filters = ["professional"], color_scheme = "warm" }
+"creative" = { transitions = ["zoom", "rotate"], filters = ["artistic"], color_scheme = "vibrant" }
+"minimal" = { transitions = ["fade"], filters = ["clean"], color_scheme = "monochrome" }
+
+# API Keys and External Services
+[api_keys]
+
+# OpenAI
+openai_api_key = ""
+openai_base_url = "https://api.openai.com/v1"
+openai_model_name = "gpt-4o-mini"
+openai_max_tokens = 4000
+openai_temperature = 0.7
+
+# Anthropic (Claude)
+anthropic_api_key = ""
+anthropic_model_name = "claude-3-5-sonnet-20241022"
+anthropic_max_tokens = 4000
+anthropic_temperature = 0.7
+
+# Google Gemini
+gemini_api_key = ""
+gemini_model_name = "gemini-1.5-pro"
+gemini_max_tokens = 4000
+gemini_temperature = 0.7
+
+# Azure OpenAI
+azure_api_key = ""
+azure_base_url = ""
+azure_model_name = "gpt-35-turbo"
+azure_api_version = "2024-02-15-preview"
+
+# Moonshot
+moonshot_api_key = ""
+moonshot_base_url = "https://api.moonshot.cn/v1"
+moonshot_model_name = "moonshot-v1-8k"
+
+# Qwen (Tongyi)
+qwen_api_key = ""
+qwen_model_name = "qwen-max"
+
+# DeepSeek
+deepseek_api_key = ""
+deepseek_base_url = "https://api.deepseek.com"
+deepseek_model_name = "deepseek-chat"
+
+# Ollama
+ollama_base_url = "http://localhost:11434/v1"
+ollama_model_name = "llama2"
+
+# G4F (Free)
+g4f_model_name = "gpt-3.5-turbo"
+
+# OneAPI
+oneapi_api_key = ""
+oneapi_base_url = ""
+oneapi_model_name = ""
+
+# Cloudflare
+cloudflare_api_key = ""
+cloudflare_account_id = ""
+cloudflare_model_name = ""
+
+# Ernie (Baidu)
+ernie_api_key = ""
+ernie_secret_key = ""
+ernie_base_url = "https://aip.baidubce.com"
+
+# Video Sources
+[video_sources]
+
+# Pexels
+pexels_api_keys = []
+pexels_base_url = "https://api.pexels.com/v1"
+pexels_per_page = 20
+
+# Pixabay
+pixabay_api_keys = []
+pixabay_base_url = "https://pixabay.com/api"
+pixabay_per_page = 20
+
+# Unsplash
+unsplash_api_keys = []
+unsplash_base_url = "https://api.unsplash.com"
+unsplash_per_page = 20
+
+# Local video sources
+local_video_paths = ["./local_videos"]
+local_image_paths = ["./local_images"]
+
+# Voice Synthesis
+[voice_synthesis]
+
+# Azure Speech
+azure_speech_key = ""
+azure_speech_region = ""
+azure_speech_voices = ["en-US-JennyNeural", "en-US-GuyNeural", "zh-CN-XiaoxiaoNeural"]
+
+# Edge TTS
+edge_tts_voices = ["en-US-JennyNeural", "en-US-GuyNeural", "zh-CN-XiaoxiaoNeural"]
+
+# ElevenLabs
+elevenlabs_api_key = ""
+elevenlabs_voices = ["21m00Tcm4TlvDq8ikWAM", "AZnzlk1XvdvUeBnXmlld"]
+
+# Local TTS models
+local_tts_models = ["./models/tts"]
+
+# Subtitle Generation
+[subtitle_generation]
+
+# Whisper
+whisper_model_path = "./models/whisper-large-v3"
+whisper_model_size = "large-v3"
+whisper_device = "auto"  # auto, cpu, cuda
+
+# Edge TTS for subtitles
+edge_subtitle_voice = "en-US-JennyNeural"
+
+# Subtitle formats
+subtitle_formats = ["srt", "vtt", "ass"]
+subtitle_languages = ["en", "zh", "ja", "ko", "es", "fr", "de"]
+
+# Background Music
+[background_music]
+
+# Local music directory
+local_music_path = "./resource/songs"
+
+# Music categories
+music_categories = ["upbeat", "calm", "dramatic", "funny", "romantic", "action"]
+
+# Music matching
+enable_ai_music_matching = true
+music_matching_model = "openai"
+
+# Video Effects
+[video_effects]
+
+# Transitions
+available_transitions = ["fade", "slide", "zoom", "rotate", "wipe", "dissolve"]
+
+# Filters
+available_filters = ["vintage", "cinematic", "vibrant", "monochrome", "sepia", "hdr"]
+
+# Animations
+available_animations = ["text_fade", "image_zoom", "slide_in", "bounce", "fade_in_out"]
+
+# Text effects
+text_effects = ["shadow", "outline", "gradient", "3d", "glow"]
+
+# Performance Settings
+[performance]
+
+# GPU settings
+gpu_memory_limit = "8GB"
+gpu_utilization = 0.8
+enable_mixed_precision = true
+
+# Processing settings
+max_concurrent_tasks = 4
+task_timeout = 1800
+memory_limit = "16GB"
+
+# Caching
+enable_memory_cache = true
+memory_cache_size = "2GB"
+enable_disk_cache = true
+disk_cache_size = "10GB"
+
+# Optimization
+enable_video_compression = true
+compression_quality = 85
+enable_audio_compression = true
+audio_compression_quality = 128
+
+# Cloud Storage
+[cloud_storage]
+
+# AWS S3
+aws_access_key_id = ""
+aws_secret_access_key = ""
+aws_region = "us-east-1"
+aws_bucket_name = ""
+aws_endpoint_url = ""
+
+# Azure Blob Storage
+azure_connection_string = ""
+azure_container_name = ""
+
+# Google Cloud Storage
+gcp_project_id = ""
+gcp_bucket_name = ""
+gcp_credentials_file = ""
+
+# Monitoring and Analytics
+[monitoring]
+
+# Prometheus metrics
+prometheus_enabled = true
+prometheus_port = 9090
+
+# Logging
+log_file = "./logs/moneyprinter_pro.log"
+log_max_size = "100MB"
+log_backup_count = 5
+log_format = "{time:YYYY-MM-DD HH:mm:ss} | {level} | {name}:{function}:{line} | {message}"
+
+# Health checks
+health_check_endpoints = ["/health", "/ready", "/live"]
+health_check_timeout = 5
+
+# Alerting
+enable_alerts = false
+alert_webhook_url = ""
+alert_email = ""
+
+# Plugin System
+[plugins]
+
+# Enable plugin system
+enable_plugins = true
+plugin_directory = "./plugins"
+plugin_auto_load = true
+
+# Available plugins
+available_plugins = ["video_effects", "ai_models", "export_formats", "analytics"]
+
+# Development Settings
+[development]
+
+# Debug mode
+debug = false
+verbose_logging = false
+
+# Development server
+dev_host = "127.0.0.1"
+dev_port = 8000
+dev_reload = true
+
+# Testing
+test_mode = false
+test_database_url = "sqlite:///./test.db"
+test_output_dir = "./test_output"
+
+# Documentation
+enable_swagger = true
+enable_redoc = true
+docs_url = "/docs"
+redoc_url = "/redoc"
