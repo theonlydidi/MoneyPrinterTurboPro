@@ -6,14 +6,35 @@ import time
 import json
 from datetime import datetime
 import os
-import cv2
-import numpy as np
-from PIL import Image, ImageDraw, ImageFont
 import tempfile
+
+# Try to import OpenCV with fallback
+try:
+    import cv2
+    import numpy as np
+    OPENCV_AVAILABLE = True
+except ImportError:
+    OPENCV_AVAILABLE = False
+    st.error("⚠️ OpenCV not available. Please install with: pip install opencv-python")
+    st.info("Video generation will be limited without OpenCV")
+
+try:
+    from PIL import Image, ImageDraw, ImageFont
+    PIL_AVAILABLE = True
+except ImportError:
+    PIL_AVAILABLE = False
+    st.warning("PIL not available. Some features may be limited.")
 
 def render_video_generator():
     st.header("🎬 Advanced Video Generator")
     st.markdown("Create professional AI-powered videos with advanced customization")
+    
+    # Check if OpenCV is available
+    if not OPENCV_AVAILABLE:
+        st.error("🚨 OpenCV is required for video generation!")
+        st.info("Please install OpenCV by running: `pip install opencv-python`")
+        st.info("Then restart the WebUI application.")
+        return
     
     # Create tabs for different generation modes
     tab1, tab2, tab3, tab4 = st.tabs(["🚀 Quick Generate", "⚙️ Advanced Settings", "📊 Batch Processing", "📚 Video History"])
@@ -112,6 +133,10 @@ def render_quick_generate():
 
 def generate_real_video(topic, style, duration):
     """Generate a real video file using OpenCV"""
+    if not OPENCV_AVAILABLE:
+        st.error("OpenCV is not available. Cannot generate videos.")
+        return None
+        
     try:
         # Create output directory if it doesn't exist
         output_dir = "output"
