@@ -234,7 +234,7 @@ def render_video_analytics_tab():
             mime="text/csv"
         )
     
-            with col2:
+                    with col2:
             st.download_button(
                 label="📊 Export as Excel",
                 data=df.to_excel(index=False, engine='openpyxl').encode('utf-8'),
