@@ -16,3 +16,6 @@ font = "sans serif"
 
 [client]
 showErrorDetails = true
+
+[deployment]
+requirementsFile = "requirements-webui.txt"

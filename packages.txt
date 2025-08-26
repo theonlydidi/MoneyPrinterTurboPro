@@ -1,0 +1,3 @@
+# System packages for MoneyPrinterTurboPro WebUI
+python3-dev
+build-essential
