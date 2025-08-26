@@ -234,13 +234,13 @@ def render_video_analytics_tab():
             mime="text/csv"
         )
     
-    with col2:
-        st.download_button(
-            label="📊 Export as Excel",
-            data=df.to_excel(index=False).encode('utf-8'),
-            file_name=f"video_analytics_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
+            with col2:
+            st.download_button(
+                label="📊 Export as Excel",
+                data=df.to_excel(index=False, engine='openpyxl').encode('utf-8'),
+                file_name=f"video_analytics_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
 
 def render_ai_performance_tab():
     st.subheader("🤖 AI Model Performance Analytics")
