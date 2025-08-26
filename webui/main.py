@@ -7,6 +7,13 @@ from datetime import datetime, timedelta
 import time
 import json
 import requests
+import sys
+import os
+
+# Add the webui directory to Python path for local development
+webui_dir = os.path.dirname(os.path.abspath(__file__))
+if webui_dir not in sys.path:
+    sys.path.insert(0, webui_dir)
 
 # Import page modules
 from pages.dashboard import render_dashboard
