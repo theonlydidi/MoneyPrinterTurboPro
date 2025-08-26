@@ -460,9 +460,15 @@ def render_cost_analysis():
         )
     
     with col2:
+        # Create Excel file in memory
+        import io
+        buffer = io.BytesIO()
+        cost_df.to_excel(buffer, index=False, engine='openpyxl')
+        buffer.seek(0)
+        
         st.download_button(
             label="📈 Export as Excel",
-            data=cost_df.to_excel(index=False, engine='openpyxl').encode('utf-8'),
+            data=buffer.getvalue(),
             file_name=f"cost_analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
