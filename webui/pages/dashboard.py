@@ -234,7 +234,17 @@ def render_video_analytics_tab():
             mime="text/csv"
         )
     
-                    with col2:
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.download_button(
+                label="📥 Export as CSV",
+                data=df.to_csv(index=False).encode('utf-8'),
+                file_name=f"video_analytics_{datetime.now().strftime('%Y%m%d_%H%m%S')}.csv",
+                mime="text/csv"
+            )
+        
+        with col2:
             st.download_button(
                 label="📊 Export as Excel",
                 data=df.to_excel(index=False, engine='openpyxl').encode('utf-8'),
