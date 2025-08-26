@@ -105,12 +105,12 @@ def render_performance_metrics():
     fig.update_layout(
         title="Performance Metrics Over Time",
         xaxis_title="Date",
-        yaxis=dict(title="Success Rate (%)", side="left"),
-        yaxis2=dict(title="Processing Time (min)", side="right", overlaying="y"),
-        yaxis3=dict(title="Quality Score", side="right", overlaying="y", position=0.95),
+        yaxis_title="Success Rate (%)",
+        yaxis2=dict(title="Processing Time (min)", overlaying="y", side="right"),
+        yaxis3=dict(title="Quality Score", overlaying="y", side="right", position=0.95),
         hovermode='x unified',
         showlegend=True,
-        height=500
+        height=400
     )
     
     st.plotly_chart(fig, use_container_width=True)
@@ -118,184 +118,148 @@ def render_performance_metrics():
     # Performance Insights
     st.markdown("### 💡 Performance Insights")
     
-    insights = [
-        "📈 **Success Rate**: Consistently above 98% with steady improvement",
-        "⚡ **Processing Time**: Reduced by 20% over the last month",
-        "🎯 **Quality Score**: Maintained high quality with slight improvements",
-        "🔄 **Uptime**: Excellent reliability with 99.9% availability"
-    ]
+    col1, col2 = st.columns(2)
     
-    for insight in insights:
-        st.markdown(insight)
+    with col1:
+        st.info("**🚀 Success Rate Trend**")
+        st.markdown("• **Current**: 98.7%")
+        st.markdown("• **Target**: 99.0%")
+        st.markdown("• **Improvement**: +1.2% this month")
+        
+        st.info("**⚡ Processing Time**")
+        st.markdown("• **Current**: 3.2 min")
+        st.markdown("• **Target**: <3.0 min")
+        st.markdown("• **Improvement**: -0.8 min this month")
+    
+    with col2:
+        st.info("**🎯 Quality Score**")
+        st.markdown("• **Current**: 4.8/5.0")
+        st.markdown("• **Target**: 4.9/5.0")
+        st.markdown("• **Improvement**: +0.2 this month")
+        
+        st.info("**🔄 System Uptime**")
+        st.markdown("• **Current**: 99.9%")
+        st.markdown("• **Target**: 99.95%")
+        st.markdown("• **Improvement**: +0.1% this month")
 
 def render_video_insights():
     st.subheader("🎬 Video Generation Insights")
     
-    # Filters
-    col1, col2, col3 = st.columns(3)
+    # Video Generation Statistics
+    col1, col2, col3, col4 = st.columns(4)
     
     with col1:
-        time_range = st.selectbox(
-            "⏰ Time Range",
-            ["Last 7 days", "Last 30 days", "Last 90 days", "Last year", "All time"],
-            index=1
+        st.metric(
+            label="📹 Total Videos",
+            value="1,247",
+            delta="+23 this week"
         )
     
     with col2:
-        video_type = st.selectbox(
-            "🎬 Video Type",
-            ["All Types", "Business", "Educational", "Entertainment", "Marketing", "Social Media"],
-            index=0
+        st.metric(
+            label="🎨 HD Quality",
+            value="89%",
+            delta="+5%"
         )
     
     with col3:
-        quality_filter = st.selectbox(
-            "🎨 Quality Filter",
-            ["All Qualities", "HD (720p)", "Full HD (1080p)", "2K (1440p)", "4K"],
-            index=0
+        st.metric(
+            label="⏱️ Avg Duration",
+            value="2.8 min",
+            delta="-0.3 min"
         )
     
-    # Video Generation Statistics
+    with col4:
+        st.metric(
+            label="💰 Cost per Video",
+            value="$0.32",
+            delta="-$0.05"
+        )
+    
+    # Video Quality Distribution
+    st.markdown("### 📊 Video Quality Distribution")
+    
+    quality_data = {
+        "Quality": ["720p", "1080p", "1440p", "4K"],
+        "Count": [125, 456, 234, 432],
+        "Percentage": [10, 37, 19, 34]
+    }
+    
+    df = pd.DataFrame(quality_data)
+    
     col1, col2 = st.columns(2)
     
     with col1:
-        st.markdown("### 📊 Video Generation by Category")
-        
-        # Sample category data
-        category_data = {
-            "Business": 35,
-            "Educational": 28,
-            "Entertainment": 22,
-            "Marketing": 10,
-            "Social Media": 5
-        }
-        
         fig = px.pie(
-            values=list(category_data.values()),
-            names=list(category_data.keys()),
-            title="Video Distribution by Category",
+            values=df['Count'],
+            names=df['Quality'],
+            title="Video Quality Distribution",
             color_discrete_sequence=px.colors.qualitative.Set3
         )
-        
         fig.update_traces(textposition='inside', textinfo='percent+label')
         st.plotly_chart(fig, use_container_width=True)
     
     with col2:
-        st.markdown("### 📈 Video Generation Trends")
-        
-        # Generate sample trend data
-        dates = pd.date_range(start=datetime.now() - timedelta(days=30), end=datetime.now(), freq='D')
-        video_counts = np.random.poisson(15, len(dates))
-        
-        fig = go.Figure()
-        
-        fig.add_trace(go.Scatter(
-            x=dates,
-            y=video_counts,
-            mode='lines+markers',
-            name='Videos Generated',
-            line=dict(color='#667eea', width=3),
-            fill='tonexty'
-        ))
-        
-        fig.update_layout(
-            title="Daily Video Generation",
-            xaxis_title="Date",
-            yaxis_title="Number of Videos",
-            height=400
-        )
-        
-        st.plotly_chart(fig, use_container_width=True)
-    
-    # Video Quality Analysis
-    st.markdown("### 🎨 Video Quality Analysis")
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.markdown("#### 📺 Quality Distribution")
-        
-        quality_data = {
-            "720p": 15,
-            "1080p": 45,
-            "1440p": 25,
-            "4K": 15
-        }
-        
         fig = px.bar(
-            x=list(quality_data.keys()),
-            y=list(quality_data.values()),
-            title="Video Quality Distribution",
-            color=list(quality_data.values()),
+            x=df['Quality'],
+            y=df['Count'],
+            title="Video Quality Count",
+            color=df['Count'],
             color_continuous_scale='viridis'
         )
-        
         fig.update_layout(height=400)
         st.plotly_chart(fig, use_container_width=True)
     
-    with col2:
-        st.markdown("#### ⏱️ Duration Analysis")
-        
-        duration_data = {
-            "15-30s": 20,
-            "30-60s": 35,
-            "1-2min": 25,
-            "2-5min": 15,
-            "5+ min": 5
-        }
-        
-        fig = px.pie(
-            values=list(duration_data.values()),
-            names=list(duration_data.keys()),
-            title="Video Duration Distribution",
-            color_discrete_sequence=px.colors.qualitative.Pastel
-        )
-        
-        fig.update_traces(textposition='inside', textinfo='percent+label')
-        st.plotly_chart(fig, use_container_width=True)
+    # Video Style Analysis
+    st.markdown("### 🎭 Video Style Analysis")
+    
+    style_data = {
+        "Style": ["Educational", "Professional", "Entertainment", "Corporate", "Creative"],
+        "Count": [456, 389, 234, 123, 45],
+        "Avg. Duration": [3.2, 2.8, 2.1, 4.5, 1.8],
+        "Success Rate": [99.1, 98.7, 97.8, 99.5, 96.2]
+    }
+    
+    style_df = pd.DataFrame(style_data)
+    st.dataframe(style_df, use_container_width=True)
 
 def render_ai_analytics():
     st.subheader("🤖 AI Model Performance Analytics")
     
-    # AI Model Performance Overview
+    # AI Model Metrics
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
         st.metric(
             label="🧠 Script Generation",
             value="99.2%",
-            delta="+0.8%",
-            delta_color="normal"
+            delta="+0.8%"
         )
     
     with col2:
         st.metric(
             label="🗣️ Voice Synthesis",
             value="98.7%",
-            delta="+1.2%",
-            delta_color="normal"
+            delta="+1.2%"
         )
     
     with col3:
         st.metric(
             label="🎵 Music Generation",
             value="96.5%",
-            delta="+2.1%",
-            delta_color="normal"
+            delta="+2.1%"
         )
     
     with col4:
         st.metric(
             label="🎨 Effects Processing",
             value="97.8%",
-            delta="+1.5%",
-            delta_color="normal"
+            delta="+1.5%"
         )
     
     # AI Model Comparison
     st.markdown("### 🏆 AI Model Performance Comparison")
     
-    # Sample model performance data
     models_data = {
         "Model": ["GPT-4", "Claude", "Gemini", "Qwen", "Moonshot"],
         "Script Quality": [9.8, 9.6, 9.4, 9.2, 9.0],
@@ -370,41 +334,70 @@ def render_cost_analysis():
         st.metric(
             label="💰 Total Cost",
             value="$312.45",
-            delta="+$12.30",
-            delta_color="normal"
+            delta="+$12.30"
         )
     
     with col2:
         st.metric(
-            label="📊 Avg. Cost per Video",
-            value="$0.25",
-            delta="-$0.05",
-            delta_color="inverse"
+            label="📊 Avg. Cost/Video",
+            value="$0.32",
+            delta="-$0.05"
         )
     
     with col3:
         st.metric(
             label="🎯 Cost Efficiency",
             value="+15%",
-            delta="+3%",
-            delta_color="normal"
+            delta="+3%"
         )
     
     with col4:
         st.metric(
             label="💡 Savings",
             value="$45.20",
-            delta="+$8.50",
-            delta_color="normal"
+            delta="+$8.50"
         )
     
-    # Cost Trends Chart
+    # Cost Breakdown
+    st.markdown("### 📊 Cost Breakdown by Service")
+    
+    cost_data = {
+        "Service": ["AI Script Generation", "Voice Synthesis", "Music Generation", "Video Processing", "Storage"],
+        "Cost": [156.23, 89.45, 34.67, 23.89, 8.21],
+        "Percentage": [50.1, 28.7, 11.1, 7.7, 2.6]
+    }
+    
+    cost_df = pd.DataFrame(cost_data)
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        fig = px.pie(
+            values=cost_df['Cost'],
+            names=cost_df['Service'],
+            title="Cost Distribution by Service",
+            color_discrete_sequence=px.colors.qualitative.Set3
+        )
+        fig.update_traces(textposition='inside', textinfo='percent+label')
+        st.plotly_chart(fig, use_container_width=True)
+    
+    with col2:
+        fig = px.bar(
+            x=cost_df['Service'],
+            y=cost_df['Cost'],
+            title="Cost by Service ($)",
+            color=cost_df['Cost'],
+            color_continuous_scale='viridis'
+        )
+        fig.update_layout(height=400, xaxis_tickangle=-45)
+        st.plotly_chart(fig, use_container_width=True)
+    
+    # Cost Trends
     st.markdown("### 📈 Cost Trends Over Time")
     
     # Generate sample cost data
     dates = pd.date_range(start=datetime.now() - timedelta(days=30), end=datetime.now(), freq='D')
-    daily_costs = np.random.poisson(8, len(dates)) * 0.25  # Average $2 per day
-    cumulative_costs = np.cumsum(daily_costs)
+    daily_costs = np.random.normal(10.5, 2.5, len(dates))  # Average $10.50 per day
     
     fig = go.Figure()
     
@@ -414,82 +407,66 @@ def render_cost_analysis():
         mode='lines+markers',
         name='Daily Cost ($)',
         line=dict(color='#ff6b6b', width=3),
-        yaxis='y'
+        marker=dict(size=6)
     ))
     
+    # Add trend line
+    z = np.polyfit(range(len(dates)), daily_costs, 1)
+    p = np.poly1d(z)
     fig.add_trace(go.Scatter(
         x=dates,
-        y=cumulative_costs,
-        mode='lines+markers',
-        name='Cumulative Cost ($)',
-        line=dict(color='#667eea', width=3),
-        yaxis='y2'
+        y=p(range(len(dates))),
+        mode='lines',
+        name='Trend Line',
+        line=dict(color='#667eea', width=2, dash='dash')
     ))
     
     fig.update_layout(
-        title="Cost Analysis Over Time",
+        title="Daily Cost Trends (Last 30 Days)",
         xaxis_title="Date",
-        yaxis=dict(title="Daily Cost ($)", side="left"),
-        yaxis2=dict(title="Cumulative Cost ($)", side="right", overlaying="y"),
+        yaxis_title="Daily Cost ($)",
         hovermode='x unified',
         showlegend=True,
-        height=500
+        height=400
     )
     
     st.plotly_chart(fig, use_container_width=True)
-    
-    # Cost Breakdown
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.markdown("### 💸 Cost Breakdown by Service")
-        
-        cost_breakdown = {
-            "AI Script Generation": 45,
-            "Voice Synthesis": 25,
-            "Music Generation": 15,
-            "Video Processing": 10,
-            "Storage & Delivery": 5
-        }
-        
-        fig = px.pie(
-            values=list(cost_breakdown.values()),
-            names=list(cost_breakdown.keys()),
-            title="Cost Distribution by Service",
-            color_discrete_sequence=px.colors.qualitative.Set1
-        )
-        
-        fig.update_traces(textposition='inside', textinfo='percent+label')
-        st.plotly_chart(fig, use_container_width=True)
-    
-    with col2:
-        st.markdown("### 📊 Cost Optimization Insights")
-        
-        insights = [
-            "💰 **AI Script Generation** is the highest cost driver (45%)",
-            "🗣️ **Voice Synthesis** costs can be optimized with bulk processing",
-            "🎵 **Music Generation** shows good cost efficiency",
-            "🎬 **Video Processing** costs are well-controlled",
-            "💾 **Storage costs** are minimal and optimized"
-        ]
-        
-        for insight in insights:
-            st.markdown(insight)
     
     # Cost Optimization Recommendations
     st.markdown("### 💡 Cost Optimization Recommendations")
     
     recommendations = [
-        "🚀 **Batch Processing**: Process multiple videos together to reduce per-video costs",
-        "🤖 **Model Selection**: Use cost-efficient AI models for non-critical content",
-        "🗣️ **Voice Optimization**: Choose standard voice options for cost-sensitive projects",
-        "🎵 **Music Selection**: Use stock music for predictable costs",
-        "📱 **Quality Settings**: Adjust resolution based on platform requirements"
+        "🎯 **Use Claude for faster processing** - Save 15% on processing time",
+        "💰 **Batch video generation** - Reduce per-video costs by 20%",
+        "🎵 **Use royalty-free music** - Save $0.05 per video",
+        "🎨 **Optimize video quality** - Balance quality vs. cost",
+        "🔄 **Implement caching** - Reduce redundant API calls"
     ]
     
-    for recommendation in recommendations:
-        st.markdown(recommendation)
+    for rec in recommendations:
+        st.info(rec)
+    
+    # Export Options
+    st.markdown("### 📥 Export Analytics")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.download_button(
+            label="📊 Export as CSV",
+            data=cost_df.to_csv(index=False).encode('utf-8'),
+            file_name=f"cost_analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+            mime="text/csv"
+        )
+    
+    with col2:
+        st.download_button(
+            label="📈 Export as Excel",
+            data=cost_df.to_excel(index=False, engine='openpyxl').encode('utf-8'),
+            file_name=f"cost_analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
 
-# Main function
+# Main function for testing
 if __name__ == "__main__":
     render_analytics()
