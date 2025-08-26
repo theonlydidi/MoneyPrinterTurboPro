@@ -5,14 +5,18 @@ import pandas as pd
 import time
 import json
 from datetime import datetime
-import requests
+import os
+import cv2
+import numpy as np
+from PIL import Image, ImageDraw, ImageFont
+import tempfile
 
 def render_video_generator():
     st.header("🎬 Advanced Video Generator")
     st.markdown("Create professional AI-powered videos with advanced customization")
     
     # Create tabs for different generation modes
-    tab1, tab2, tab3 = st.tabs(["🚀 Quick Generate", "⚙️ Advanced Settings", "📊 Batch Processing"])
+    tab1, tab2, tab3, tab4 = st.tabs(["🚀 Quick Generate", "⚙️ Advanced Settings", "📊 Batch Processing", "📚 Video History"])
     
     with tab1:
         render_quick_generate()
@@ -22,6 +26,9 @@ def render_video_generator():
     
     with tab3:
         render_batch_processing()
+    
+    with tab4:
+        show_video_history()
 
 def render_quick_generate():
     st.subheader("Quick Video Generation")
@@ -44,297 +51,192 @@ def render_quick_generate():
         
         video_length = st.slider(
             "⏱️ Target Duration (seconds)",
-            min_value=15,
-            max_value=300,
-            value=60,
-            step=15,
+            min_value=5,
+            max_value=30,
+            value=15,
+            step=5,
             help="How long should the video be?"
         )
     
     with col2:
-        st.info("**AI-Powered Generation**")
-        st.metric("Estimated Cost", "$0.15 - $0.45")
-        st.metric("Processing Time", "2-5 minutes")
+        st.info("**Real Video Generation**")
+        st.metric("Estimated Cost", "$0.00 (Local)")
+        st.metric("Processing Time", "10-30 seconds")
         
-        if st.button("🚀 Generate Video", type="primary", use_container_width=True):
+        if st.button("🚀 Generate Real Video", type="primary", use_container_width=True):
             if video_topic:
-                with st.spinner("🎬 Generating your video..."):
-                    # Simulate video generation process
-                    progress_bar = st.progress(0)
-                    status_text = st.empty()
+                with st.spinner("🎬 Generating your real video..."):
+                    # Generate actual video
+                    video_path = generate_real_video(video_topic, video_style, video_length)
                     
-                    steps = [
-                        "Analyzing topic and generating script...",
-                        "Creating AI voice narration...",
-                        "Generating background music...",
-                        "Applying video effects and transitions...",
-                        "Finalizing and optimizing video..."
-                    ]
-                    
-                    for i, step in enumerate(steps):
-                        status_text.text(step)
-                        progress_bar.progress((i + 1) * 20)
-                        time.sleep(1)
-                    
-                    progress_bar.progress(100)
-                    status_text.success("✅ Video generated successfully!")
-                    
-                    # Show results
-                    st.success("🎉 Your video is ready!")
-                    col1, col2, col3 = st.columns(3)
-                    
-                    with col1:
-                        st.metric("Script Length", f"{len(video_topic.split()) * 2} words")
-                    with col2:
-                        st.metric("Voice Quality", "HD Premium")
-                    with col3:
-                        st.metric("Video Quality", "1080p")
-                    
-                    # Download button
-                    st.download_button(
-                        label="📥 Download Video",
-                        data=b"Video content would be here",
-                        file_name=f"video_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp4",
-                        mime="video/mp4"
-                    )
+                    if video_path and os.path.exists(video_path):
+                        st.success("🎉 Your video is ready!")
+                        
+                        # Show video
+                        st.video(video_path)
+                        
+                        # Video info
+                        col1, col2, col3 = st.columns(3)
+                        with col1:
+                            st.metric("Duration", f"{video_length} seconds")
+                        with col2:
+                            st.metric("Quality", "720p")
+                        with col3:
+                            st.metric("Format", "MP4")
+                        
+                        # Download button
+                        with open(video_path, "rb") as f:
+                            st.download_button(
+                                label="📥 Download Video",
+                                data=f.read(),
+                                file_name=f"video_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp4",
+                                mime="video/mp4"
+                            )
+                        
+                        # Show file location
+                        st.info(f"💾 Video saved to: `{video_path}`")
+                        
+                        # Add to session state for tracking
+                        if 'generated_videos' not in st.session_state:
+                            st.session_state.generated_videos = []
+                        st.session_state.generated_videos.append({
+                            'topic': video_topic,
+                            'path': video_path,
+                            'timestamp': datetime.now(),
+                            'duration': video_length
+                        })
+                    else:
+                        st.error("❌ Video generation failed. Please try again.")
             else:
-                st.error("Please enter a video topic!")
+                st.warning("⚠️ Please enter a video topic")
+
+def generate_real_video(topic, style, duration):
+    """Generate a real video file using OpenCV"""
+    try:
+        # Create output directory if it doesn't exist
+        output_dir = "output"
+        os.makedirs(output_dir, exist_ok=True)
+        
+        # Generate filename
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"video_{timestamp}.mp4"
+        video_path = os.path.join(output_dir, filename)
+        
+        # Video settings
+        fps = 30
+        width, height = 1280, 720
+        total_frames = duration * fps
+        
+        # Create video writer
+        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+        out = cv2.VideoWriter(video_path, fourcc, fps, (width, height))
+        
+        # Generate frames
+        for frame_num in range(total_frames):
+            # Create frame with topic text
+            frame = create_video_frame(topic, style, frame_num, total_frames, width, height)
+            
+            # Write frame
+            out.write(frame)
+        
+        # Release video writer
+        out.release()
+        
+        return video_path
+        
+    except Exception as e:
+        st.error(f"Error generating video: {str(e)}")
+        return None
+
+def create_video_frame(topic, style, frame_num, total_frames, width, height):
+    """Create a single video frame"""
+    # Create background
+    if style == "Professional":
+        bg_color = (50, 50, 100)  # Dark blue
+    elif style == "Creative":
+        bg_color = (100, 50, 100)  # Purple
+    elif style == "Educational":
+        bg_color = (50, 100, 50)  # Green
+    else:
+        bg_color = (80, 80, 80)  # Gray
+    
+    frame = np.full((height, width, 3), bg_color, dtype=np.uint8)
+    
+    # Add animated elements
+    progress = frame_num / total_frames
+    
+    # Add topic text
+    text = topic[:50] + "..." if len(topic) > 50 else topic
+    cv2.putText(frame, text, (width//2 - 200, height//2), 
+                cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+    
+    # Add style indicator
+    cv2.putText(frame, f"Style: {style}", (50, 50), 
+                cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+    
+    # Add progress bar
+    bar_width = int(width * 0.8)
+    bar_height = 20
+    bar_x = (width - bar_width) // 2
+    bar_y = height - 100
+    
+    # Background bar
+    cv2.rectangle(frame, (bar_x, bar_y), (bar_x + bar_width, bar_y + bar_height), 
+                  (100, 100, 100), -1)
+    
+    # Progress bar
+    progress_width = int(bar_width * progress)
+    cv2.rectangle(frame, (bar_x, bar_y), (bar_x + progress_width, bar_y + bar_height), 
+                  (0, 255, 0), -1)
+    
+    # Add frame counter
+    cv2.putText(frame, f"Frame: {frame_num}/{total_frames}", (50, height - 50), 
+                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+    
+    # Add some animation based on progress
+    if progress > 0.5:
+        # Add moving elements in second half
+        offset = int(50 * np.sin(progress * 10))
+        cv2.circle(frame, (width//2 + offset, height//2 - 100), 30, (255, 255, 0), -1)
+    
+    return frame
 
 def render_advanced_settings():
     st.subheader("Advanced Video Settings")
-    
-    # AI Model Selection
-    st.markdown("### 🤖 AI Model Configuration")
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        llm_provider = st.selectbox(
-            "🧠 LLM Provider",
-            ["OpenAI GPT-4", "Anthropic Claude", "Google Gemini", "Qwen", "Moonshot", "Ollama"],
-            help="Choose the AI model for script generation"
-        )
-        
-        voice_provider = st.selectbox(
-            "🗣️ Voice Provider",
-            ["Edge TTS", "Azure Speech", "ElevenLabs", "Google TTS", "Coqui TTS"],
-            help="Select the text-to-speech service"
-        )
-        
-        voice_preset = st.selectbox(
-            "🎭 Voice Character",
-            ["Professional Male", "Professional Female", "Casual Male", "Casual Female", "Narrator", "News Anchor"],
-            help="Choose the voice character and style"
-        )
-    
-    with col2:
-        music_provider = st.selectbox(
-            "🎵 Music Provider",
-            ["AI Generated", "Stock Music", "Custom Upload", "No Music"],
-            help="Background music source"
-        )
-        
-        music_mood = st.selectbox(
-            "🎶 Music Mood",
-            ["Upbeat", "Calm", "Energetic", "Professional", "Creative", "Dramatic"],
-            help="Select the mood for background music"
-        )
-        
-        music_volume = st.slider(
-            "🔊 Music Volume",
-            min_value=0,
-            max_value=100,
-            value=30,
-            help="Background music volume level"
-        )
-    
-    # Video Effects & Transitions
-    st.markdown("### 🎨 Visual Effects")
-    
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        video_resolution = st.selectbox(
-            "📺 Resolution",
-            ["720p", "1080p", "1440p", "4K"],
-            index=1,
-            help="Video output resolution"
-        )
-        
-        fps = st.selectbox(
-            "🎬 Frame Rate",
-            ["24 fps", "30 fps", "60 fps"],
-            index=1,
-            help="Frames per second"
-        )
-    
-    with col2:
-        transition_type = st.selectbox(
-            "🔄 Transitions",
-            ["Fade", "Slide", "Zoom", "Dissolve", "Wipe", "None"],
-            help="Transition effects between scenes"
-        )
-        
-        color_grade = st.selectbox(
-            "🎨 Color Grade",
-            ["Natural", "Warm", "Cool", "Cinematic", "Vintage", "Modern"],
-            help="Color grading style"
-        )
-    
-    with col3:
-        text_style = st.selectbox(
-            "📝 Text Style",
-            ["Modern", "Classic", "Bold", "Elegant", "Playful", "Corporate"],
-            help="Subtitle and text appearance"
-        )
-        
-        animation_style = st.selectbox(
-            "✨ Animation",
-            ["Smooth", "Bouncy", "Sharp", "Gentle", "Dynamic", "Minimal"],
-            help="Animation style for elements"
-        )
-    
-    # Advanced Options
-    st.markdown("### ⚙️ Advanced Options")
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        auto_subtitles = st.checkbox("📝 Auto-generate subtitles", value=True)
-        translate_subtitles = st.checkbox("🌐 Translate subtitles", value=False)
-        target_language = st.selectbox(
-            "🌍 Target Language",
-            ["English", "Spanish", "French", "German", "Chinese", "Japanese", "Arabic"],
-            disabled=not translate_subtitles
-        )
-        
-        watermark = st.checkbox("💧 Add watermark", value=False)
-        watermark_text = st.text_input(
-            "💧 Watermark Text",
-            value="MoneyPrinterTurboPro",
-            disabled=not watermark
-        )
-    
-    with col2:
-        optimize_for_platform = st.selectbox(
-            "📱 Platform Optimization",
-            ["YouTube", "Instagram", "TikTok", "LinkedIn", "Facebook", "Twitter", "Universal"],
-            help="Optimize video for specific platform"
-        )
-        
-        compression_level = st.selectbox(
-            "🗜️ Compression",
-            ["High Quality", "Balanced", "Small File Size"],
-            index=1,
-            help="Video compression level"
-        )
-        
-        metadata_tags = st.text_area(
-            "🏷️ Metadata Tags",
-            placeholder="Enter tags separated by commas",
-            help="SEO and organization tags"
-        )
-    
-    # Generate Button
-    if st.button("🚀 Generate Advanced Video", type="primary", use_container_width=True):
-        st.success("🎯 Advanced video generation started!")
-        
-        # Show generation progress
-        with st.spinner("Processing advanced settings..."):
-            # Simulate processing
-            time.sleep(2)
-            st.info("📊 Advanced video generation in progress...")
+    st.info("Advanced settings coming soon! For now, use Quick Generate to create real videos.")
 
 def render_batch_processing():
     st.subheader("Batch Video Processing")
+    st.info("Batch processing coming soon! For now, use Quick Generate to create real videos.")
+
+def show_video_history():
+    st.subheader("📚 Recently Generated Videos")
     
-    # Batch Configuration
-    col1, col2 = st.columns([2, 1])
-    
-    with col1:
-        st.markdown("### 📋 Batch Configuration")
-        
-        # Multiple topics
-        topics_input = st.text_area(
-            "🎯 Video Topics (one per line)",
-            placeholder="Enter multiple video topics, one per line:\nHow to make coffee\nTop 10 productivity tips\nBeginner's guide to cooking",
-            height=120,
-            help="Enter multiple video topics for batch processing"
-        )
-        
-        # Batch settings
-        col1a, col1b = st.columns(2)
-        
-        with col1a:
-            batch_style = st.selectbox(
-                "🎨 Batch Style",
-                ["Consistent", "Varied", "Custom per video"],
-                help="Style consistency across batch"
-            )
-            
-            priority_order = st.selectbox(
-                "📊 Priority Order",
-                ["Sequential", "Random", "By length", "By complexity"],
-                help="Processing order for batch videos"
-            )
-        
-        with col1b:
-            max_concurrent = st.slider(
-                "⚡ Max Concurrent",
-                min_value=1,
-                max_value=5,
-                value=2,
-                help="Maximum videos processing simultaneously"
-            )
-            
-            auto_retry = st.checkbox("🔄 Auto-retry failed", value=True)
-    
-    with col2:
-        st.info("**Batch Processing**")
-        st.metric("Total Videos", len(topics_input.split('\n')) if topics_input else 0)
-        st.metric("Est. Time", "10-30 min")
-        st.metric("Est. Cost", "$0.50 - $2.00")
-        
-        if st.button("🚀 Start Batch Processing", type="primary", use_container_width=True):
-            if topics_input and topics_input.strip():
-                topics = [t.strip() for t in topics_input.split('\n') if t.strip()]
-                st.success(f"🎯 Starting batch processing for {len(topics)} videos!")
-                
-                # Show batch progress
-                progress_bar = st.progress(0)
-                status_text = st.empty()
-                
-                for i, topic in enumerate(topics):
-                    status_text.text(f"Processing: {topic}")
-                    progress_bar.progress((i + 1) / len(topics))
-                    time.sleep(0.5)
-                
-                progress_bar.progress(100)
-                status_text.success("✅ Batch processing completed!")
-                
-                # Show results summary
-                st.success("🎉 Batch processing finished!")
-                
-                # Results table
-                results_data = {
-                    "Video": topics,
-                    "Status": ["✅ Complete"] * len(topics),
-                    "Duration": ["60s"] * len(topics),
-                    "Quality": ["1080p"] * len(topics)
-                }
-                
-                df = pd.DataFrame(results_data)
-                st.dataframe(df, use_container_width=True)
-                
-                # Download all button
-                st.download_button(
-                    label="📥 Download All Videos",
-                    data=df.to_csv(index=False).encode('utf-8'),
-                    file_name=f"batch_videos_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-                    mime="text/csv"
-                )
-            else:
-                st.error("Please enter video topics for batch processing!")
+    if 'generated_videos' in st.session_state and st.session_state.generated_videos:
+        for i, video in enumerate(st.session_state.generated_videos):
+            with st.expander(f"🎬 {video['topic']} - {video['timestamp'].strftime('%H:%M:%S')}"):
+                col1, col2 = st.columns([2, 1])
+                with col1:
+                    if os.path.exists(video['path']):
+                        st.video(video['path'])
+                    else:
+                        st.warning("Video file not found")
+                with col2:
+                    st.write(f"**Duration:** {video['duration']} seconds")
+                    st.write(f"**Style:** Professional")
+                    st.write(f"**Path:** `{video['path']}`")
+                    
+                    # Download button
+                    if os.path.exists(video['path']):
+                        with open(video['path'], "rb") as f:
+                            st.download_button(
+                                label="📥 Download",
+                                data=f.read(),
+                                file_name=os.path.basename(video['path']),
+                                mime="video/mp4"
+                            )
+    else:
+        st.info("No videos generated yet. Use Quick Generate to create your first video!")
 
 # Main function
 if __name__ == "__main__":
