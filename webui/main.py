@@ -10,6 +10,7 @@ import requests
 import sys
 import os
 
+# Force Streamlit Cloud deployment update - Platform ready!
 # Add the webui directory to Python path for local development
 webui_dir = os.path.dirname(os.path.abspath(__file__))
 if webui_dir not in sys.path:
