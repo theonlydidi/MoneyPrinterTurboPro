@@ -7,6 +7,10 @@ import os
 import json
 from typing import Dict, List, Optional, Any
 from loguru import logger
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 try:
     import openai
@@ -114,10 +118,10 @@ class AIContentGenerator:
         """
         
         try:
-            response = self.openai_client.ChatCompletion.create(
-                model="gpt-4",
+            response = self.openai_client.chat.completions.create(
+                model="gpt-4o-mini",
                 messages=[
-                    {"role": "system", "content": "You are a professional video script writer specializing in engaging, educational content."},
+                    {"role": "system", "content": "You are a professional video script writer specializing in engaging, educational content. Always respond with valid JSON."},
                     {"role": "user", "content": prompt}
                 ],
                 max_tokens=1500,
@@ -125,9 +129,17 @@ class AIContentGenerator:
             )
             
             content = response.choices[0].message.content
-            script_data = json.loads(content)
-            logger.info(f"✅ OpenAI generated script for: {topic}")
-            return script_data
+            logger.info(f"OpenAI response: {content[:200]}...")
+            
+            # Try to parse JSON, with fallback if it fails
+            try:
+                script_data = json.loads(content)
+                logger.info(f"✅ OpenAI generated script for: {topic}")
+                return script_data
+            except json.JSONDecodeError as e:
+                logger.warning(f"OpenAI response not valid JSON: {e}")
+                logger.warning(f"Response content: {content}")
+                raise
             
         except Exception as e:
             logger.error(f"❌ OpenAI generation failed: {e}")
