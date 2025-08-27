@@ -8,3 +8,4 @@ requests>=2.31.0
 PyJWT>=2.8.0
 toml>=0.10.2
 openpyxl>=3.1.0
+opencv-python>=4.8.0
