@@ -160,13 +160,13 @@ async def main_async():
         setup_logging()
         
         # Initialize database
-        await init_database()
+        init_database()
         
         # Initialize cache
-        await init_cache()
+        init_cache()
         
         # Load plugins
-        await load_plugins()
+        load_plugins()
         
         # Check GPU
         check_gpu()

@@ -1,0 +1,168 @@
+# MoneyPrinterTurboPro Configuration
+# This file contains the main configuration for the application
+
+[app]
+name = "MoneyPrinterTurboPro"
+version = "2.0.0"
+debug = false
+log_level = "INFO"
+host = "0.0.0.0"
+port = 8080
+webui_port = 8501
+workers = 4
+reload = false
+enable_api = true
+enable_webui = true
+enable_auth = true
+enable_rate_limit = true
+enable_websocket = true
+enable_gpu = true
+enable_cache = true
+video_sources = ["pexels", "pixabay", "unsplash", "local"]
+hide_config = false
+
+[api]
+prefix = "/api/v1"
+enable_cors = true
+cors_origins = ["*"]
+enable_docs = true
+
+[security]
+jwt_secret = "your-super-secret-jwt-key-change-this"
+jwt_algorithm = "HS256"
+jwt_expire_minutes = 1440
+bcrypt_rounds = 12
+
+[rate_limit]
+max_requests_per_minute = 60
+max_videos_per_user = 100
+max_concurrent_tasks = 4
+
+[cache]
+cache_dir = "./cache"
+cache_size_limit = "10GB"
+cache_ttl = 86400
+enable_memory_cache = true
+memory_cache_size = "2GB"
+enable_disk_cache = true
+disk_cache_size = "10GB"
+
+[storage]
+storage_type = "local"
+storage_path = "./storage"
+temp_dir = "./temp"
+output_dir = "./output"
+cleanup_temp_files = true
+temp_file_ttl = 3600
+
+[video_processing]
+timeout = 1800
+max_duration = 600
+max_size = "2GB"
+enable_parallel = true
+output_formats = ["mp4", "mov", "webm", "avi"]
+default_quality = "1080p"
+default_fps = 30
+
+[ai]
+default_llm_provider = "openai"
+default_voice_provider = "azure"
+default_subtitle_provider = "whisper"
+
+[monitoring]
+prometheus_enabled = true
+prometheus_port = 9090
+enable_health_check = true
+health_check_interval = 30
+log_file = "./logs/moneyprinter_pro.log"
+log_max_size = "100MB"
+log_backup_count = 5
+
+[performance]
+gpu_memory_limit = "8GB"
+gpu_utilization = 0.8
+enable_mixed_precision = true
+task_timeout = 1800
+memory_limit = "16GB"
+enable_video_compression = true
+compression_quality = 85
+enable_audio_compression = true
+audio_compression_quality = 128
+
+[plugins]
+enable_plugins = true
+plugin_directory = "./plugins"
+plugin_auto_load = true
+available_plugins = ["video_effects", "ai_models", "export_formats", "analytics"]
+
+[development]
+debug = false
+verbose_logging = false
+dev_host = "127.0.0.1"
+dev_port = 8000
+dev_reload = true
+test_mode = false
+enable_swagger = true
+enable_redoc = true
+
+# Quality presets
+[quality_presets.4k]
+width = 3840
+height = 2160
+bitrate = "50M"
+fps = 30
+
+[quality_presets.2k]
+width = 2560
+height = 1440
+bitrate = "25M"
+fps = 30
+
+[quality_presets.1080p]
+width = 1920
+height = 1080
+bitrate = "15M"
+fps = 30
+
+[quality_presets.720p]
+width = 1280
+height = 720
+bitrate = "8M"
+fps = 30
+
+[quality_presets.480p]
+width = 854
+height = 480
+bitrate = "4M"
+fps = 30
+
+# Style presets
+[style_presets.modern]
+transitions = ["fade", "slide", "zoom"]
+filters = ["vintage", "cinematic", "hdr"]
+color_scheme = "cool"
+
+[style_presets.business]
+transitions = ["fade", "slide"]
+filters = ["professional", "clean"]
+color_scheme = "warm"
+
+[style_presets.creative]
+transitions = ["zoom", "rotate", "morph"]
+filters = ["artistic", "vibrant", "dreamy"]
+color_scheme = "vibrant"
+
+[style_presets.minimal]
+transitions = ["fade"]
+filters = ["clean", "simple"]
+color_scheme = "monochrome"
+
+# API Keys (set these in environment variables for security)
+# openai_api_key = "your-openai-api-key"
+# anthropic_api_key = "your-anthropic-api-key"
+# gemini_api_key = "your-gemini-api-key"
+# azure_api_key = "your-azure-api-key"
+
+# Database and Redis
+database_url = "sqlite:///./moneyprinter_pro.db"
+redis_url = "redis://localhost:6379"

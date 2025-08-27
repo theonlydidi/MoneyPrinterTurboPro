@@ -162,10 +162,11 @@ class DevelopmentSettings(BaseModel):
 class Settings(BaseSettings):
     """Main settings class"""
     model_config = SettingsConfigDict(
-        env_file="config.toml",
+        env_file=".env",
         env_file_encoding="utf-8",
         env_nested_delimiter="__",
-        case_sensitive=False
+        case_sensitive=False,
+        extra="ignore"  # Allow extra fields in config
     )
     
     # Core settings
@@ -198,6 +199,63 @@ class Settings(BaseSettings):
     # Database and Redis
     database_url: str = "sqlite:///./moneyprinter_pro.db"
     redis_url: str = "redis://localhost:6379"
+    
+    def __init__(self, **kwargs):
+        """Initialize settings with TOML file loading"""
+        # Load TOML config first
+        toml_config = self._load_toml_config()
+        
+        # Merge TOML config with kwargs
+        merged_config = {**toml_config, **kwargs}
+        
+        # Call parent constructor
+        super().__init__(**merged_config)
+    
+    def _load_toml_config(self) -> Dict[str, Any]:
+        """Load configuration from TOML file"""
+        try:
+            import tomllib
+        except ImportError:
+            try:
+                import tomli as tomllib
+            except ImportError:
+                # Fallback to basic config
+                return {}
+        
+        config_path = Path("config.toml")
+        if not config_path.exists():
+            return {}
+        
+        try:
+            with open(config_path, "rb") as f:
+                toml_data = tomllib.load(f)
+            
+            # Convert TOML data to flat structure for Pydantic
+            flat_config = self._flatten_toml(toml_data)
+            return flat_config
+            
+        except Exception as e:
+            print(f"Warning: Could not load TOML config: {e}")
+            return {}
+    
+    def _flatten_toml(self, data: Dict[str, Any], prefix: str = "") -> Dict[str, Any]:
+        """Flatten nested TOML structure for Pydantic compatibility"""
+        flat = {}
+        
+        for key, value in data.items():
+            full_key = f"{prefix}{key}" if prefix else key
+            
+            if isinstance(value, dict):
+                # Recursively flatten nested dictionaries
+                flat.update(self._flatten_toml(value, f"{full_key}__"))
+            else:
+                # Convert value to string if it's a list or other complex type
+                if isinstance(value, (list, dict)):
+                    flat[full_key] = str(value)
+                else:
+                    flat[full_key] = value
+        
+        return flat
     
     @validator('app', pre=True)
     def load_app_settings(cls, v):
