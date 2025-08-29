@@ -18,6 +18,7 @@ from azure.storage.blob import BlobServiceClient
 from google.cloud import storage
 import requests
 from minio import Minio
+from urllib.parse import urlparse
 
 from app.core.config import settings
 from app.core.logging import get_logger, time_operation
@@ -474,12 +475,17 @@ class StorageManager:
         
         if source.startswith('s3://'):
             return "s3"
-        elif source.startswith('https://') and 'blob.core.windows.net' in source:
-            return "azure"
-        elif source.startswith('https://') and 'storage.googleapis.com' in source:
-            return "gcs"
-        elif source.startswith('http://') or source.startswith('https://'):
-            return "minio"  # Assume MinIO for other HTTP URLs
+        
+        # Use urlparse for HTTP(S) URLs
+        if source.startswith('http://') or source.startswith('https://'):
+            parsed = urlparse(source)
+            hostname = parsed.hostname or ""
+            if hostname.endswith("blob.core.windows.net"):
+                return "azure"
+            elif hostname == "storage.googleapis.com" or hostname.endswith(".storage.googleapis.com"):
+                return "gcs"
+            else:
+                return "minio"  # Assume MinIO for other HTTP URLs
         else:
             return "local"
     
